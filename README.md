@@ -78,3 +78,13 @@ type Page struct {
 ```
 
 > Note the selector for the `Meta` field is `meta`; This does act as a selector, it is just used to indicate that the `Meta` field should be scraped.
+
+### Regex
+
+Regex can be used to extract data from the grabbed text. For example, to extract the title from a Wikipedia page:
+
+```go
+type Page struct {
+    Title string `webgrab:"title" regex:"(.+) - Wikipedia"`
+}
+```

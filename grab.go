@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -11,7 +12,10 @@ import (
 )
 
 // TagName is the name of the tag that contains the data to grab.
-const tagName = "webgrab"
+const tagNameGrab = "webgrab"
+
+// TagNameRegex is the name of the tag that contains the regex to use.
+const tagNameRegex = "regex"
 
 // Grab is the struct that contains the configuration for the grabber.
 type Grab struct {
@@ -37,6 +41,9 @@ type grabTag struct {
 
 	// Attribute is the attribute of the tag to grab.
 	Attribute string
+
+	// Regex is the regex to use for the grabber.
+	Regex string
 }
 
 func parseTag(tag string) grabTag {
@@ -67,9 +74,10 @@ func parseStruct(data interface{}) []grabTag {
 	// document and set the value of the field to the text of the tag.
 	for i := 0; i < reflect.TypeOf(data).Elem().NumField(); i++ {
 		// Get the tag.
-		tag := parseTag(reflect.TypeOf(data).Elem().Field(i).Tag.Get(tagName))
+		tag := parseTag(reflect.TypeOf(data).Elem().Field(i).Tag.Get(tagNameGrab))
 		tag.Field = reflect.TypeOf(data).Elem().Field(i).Name
 		tag.FieldType = reflect.TypeOf(data).Elem().Field(i).Type
+		tag.Regex = reflect.TypeOf(data).Elem().Field(i).Tag.Get(tagNameRegex)
 
 		// If the tag is empty, skip it.
 		if tag.Selector == "" {
@@ -139,6 +147,35 @@ func (g Grab) Grab(url string, data interface{}) error {
 	return nil
 }
 
+// extract extracts the first matched group from the given string using the
+// given regex.
+func (g Grab) extract(str string, regex string) string {
+	// Compile the regex.
+	re := regexp.MustCompile(regex)
+
+	// Find the first match.
+	match := re.FindStringSubmatch(str)
+
+	// If there is no match, return an empty string.
+	if len(match) == 0 {
+		return "(no match)"
+	}
+
+	// Return the first matched group.
+	return match[1]
+}
+
+func (g Grab) clean(str string, tag grabTag) string {
+	// If the regex is empty, return the string.
+	if tag.Regex != "" {
+		// Extract the part of the value specified by the regex.
+		str = g.extract(str, tag.Regex)
+	}
+
+	// Return the trimmed string.
+	return strings.TrimSpace(str)
+}
+
 func (g Grab) scrape(doc *goquery.Document, tag grabTag) (string, error) {
 	// Find the tag in the document.
 	sel := doc.Find(tag.Selector)
@@ -155,11 +192,11 @@ func (g Grab) scrape(doc *goquery.Document, tag grabTag) (string, error) {
 
 	// If the attribute is empty, return the trimmed text of the tag.
 	if tag.Attribute == "" {
-		return strings.TrimSpace(sel.Text()), nil
+		return g.clean(sel.Text(), tag), nil
 	}
 
 	// Return the attribute.
-	return strings.TrimSpace(sel.AttrOr(tag.Attribute, "")), nil
+	return g.clean(sel.AttrOr(tag.Attribute, ""), tag), nil
 }
 
 func (g Grab) scrapeSlice(doc *goquery.Document, tag grabTag) ([]string, error) {
@@ -178,12 +215,12 @@ func (g Grab) scrapeSlice(doc *goquery.Document, tag grabTag) ([]string, error) 
 	sel.Each(func(i int, s *goquery.Selection) {
 		// If the attribute is empty, append the text of the tag.
 		if tag.Attribute == "" {
-			strs = append(strs, strings.TrimSpace(s.Text()))
+			strs = append(strs, g.clean(s.Text(), tag))
 			return
 		}
 
 		// Append the attribute.
-		strs = append(strs, strings.TrimSpace(s.AttrOr(tag.Attribute, "")))
+		strs = append(strs, g.clean(s.AttrOr(tag.Attribute, ""), tag))
 	})
 
 	// Return the slice.
