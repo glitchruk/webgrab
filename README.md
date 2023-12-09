@@ -54,8 +54,8 @@ specified, the text of the selected element will be grabbed.
 
 ### Arrays
 
-If the field is an array, the selector will be applied to each element of the
-array. For example:
+If the field is an array, all matching elements will be grabbed. For example,
+to grab all links from a page:
 
 ```go
 type Page struct {
