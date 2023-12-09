@@ -148,18 +148,23 @@ func (g Grab) scrape(doc *goquery.Document, tag grabTag) (string, error) {
 		return "", fmt.Errorf("tag not found: %s", tag.Selector)
 	}
 
-	// If the attribute is empty, return the text of the tag.
+	// If tag was found more than once, use the first tag.
+	if sel.Length() > 1 {
+		sel = sel.First()
+	}
+
+	// If the attribute is empty, return the trimmed text of the tag.
 	if tag.Attribute == "" {
-		return sel.Text(), nil
+		return strings.TrimSpace(sel.Text()), nil
 	}
 
 	// Return the attribute.
-	return sel.AttrOr(tag.Attribute, ""), nil
+	return strings.TrimSpace(sel.AttrOr(tag.Attribute, "")), nil
 }
 
 func (g Grab) scrapeSlice(doc *goquery.Document, tag grabTag) ([]string, error) {
 	// Create a new slice of strings.
-	strings := make([]string, 0)
+	strs := make([]string, 0)
 
 	// Find the tags in the document.
 	sel := doc.Find(tag.Selector)
@@ -173,16 +178,16 @@ func (g Grab) scrapeSlice(doc *goquery.Document, tag grabTag) ([]string, error) 
 	sel.Each(func(i int, s *goquery.Selection) {
 		// If the attribute is empty, append the text of the tag.
 		if tag.Attribute == "" {
-			strings = append(strings, s.Text())
+			strs = append(strs, strings.TrimSpace(s.Text()))
 			return
 		}
 
 		// Append the attribute.
-		strings = append(strings, s.AttrOr(tag.Attribute, ""))
+		strs = append(strs, strings.TrimSpace(s.AttrOr(tag.Attribute, "")))
 	})
 
 	// Return the slice.
-	return strings, nil
+	return strs, nil
 }
 
 func (g Grab) scrapeStruct(doc *goquery.Document, nested interface{}) error {
