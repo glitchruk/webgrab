@@ -17,8 +17,8 @@ const tagNameGrab = "webgrab"
 // TagNameRegex is the name of the tag that contains the regex to use.
 const tagNameRegex = "regex"
 
-// Grab is the struct that contains the configuration for the grabber.
-type Grab struct {
+// Grabber is the struct that contains the configuration for the grabber.
+type Grabber struct {
 	// Timeout is the timeout in seconds for the grabber.
 	Timeout int
 
@@ -94,7 +94,7 @@ func parseStruct(data interface{}) []grabTag {
 
 // Grab grabs the data from the given URL and stores it in the given data
 // struct.
-func (g Grab) Grab(url string, data interface{}) error {
+func (g Grabber) Grab(url string, data interface{}) error {
 	// If the data is not a pointer, return an error.
 	if reflect.TypeOf(data).Kind() != reflect.Ptr {
 		return fmt.Errorf("data must be a pointer")
@@ -149,7 +149,7 @@ func (g Grab) Grab(url string, data interface{}) error {
 
 // extract extracts the first matched group from the given string using the
 // given regex.
-func (g Grab) extract(str string, regex string) string {
+func (g Grabber) extract(str string, regex string) string {
 	// Compile the regex.
 	re := regexp.MustCompile(regex)
 
@@ -165,7 +165,7 @@ func (g Grab) extract(str string, regex string) string {
 	return match[1]
 }
 
-func (g Grab) clean(str string, tag grabTag) string {
+func (g Grabber) clean(str string, tag grabTag) string {
 	// If the regex is empty, return the string.
 	if tag.Regex != "" {
 		// Extract the part of the value specified by the regex.
@@ -176,7 +176,7 @@ func (g Grab) clean(str string, tag grabTag) string {
 	return strings.TrimSpace(str)
 }
 
-func (g Grab) scrape(doc *goquery.Document, tag grabTag) (string, error) {
+func (g Grabber) scrape(doc *goquery.Document, tag grabTag) (string, error) {
 	// Find the tag in the document.
 	sel := doc.Find(tag.Selector)
 
@@ -199,7 +199,7 @@ func (g Grab) scrape(doc *goquery.Document, tag grabTag) (string, error) {
 	return g.clean(sel.AttrOr(tag.Attribute, ""), tag), nil
 }
 
-func (g Grab) scrapeSlice(doc *goquery.Document, tag grabTag) ([]string, error) {
+func (g Grabber) scrapeSlice(doc *goquery.Document, tag grabTag) ([]string, error) {
 	// Create a new slice of strings.
 	strs := make([]string, 0)
 
@@ -227,7 +227,7 @@ func (g Grab) scrapeSlice(doc *goquery.Document, tag grabTag) ([]string, error) 
 	return strs, nil
 }
 
-func (g Grab) scrapeStruct(doc *goquery.Document, nested interface{}) error {
+func (g Grabber) scrapeStruct(doc *goquery.Document, nested interface{}) error {
 	// Parse the struct.
 	tags := parseStruct(nested)
 
@@ -281,8 +281,8 @@ func (g Grab) scrapeStruct(doc *goquery.Document, nested interface{}) error {
 }
 
 // NewGrab returns a new Grab struct with default values.
-func NewGrabber() *Grab {
-	return &Grab{
+func New() *Grabber {
+	return &Grabber{
 		Timeout:      10,
 		MaxRedirects: 10,
 		UserAgent:    "Mozilla/5.0 (compatible; WebGrab/1.0;) Go",

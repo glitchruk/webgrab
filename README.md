@@ -28,7 +28,7 @@ type Page struct {
 func main() {
     page := Page{}
     
-    grabber := webgrab.NewGrabber()
+    grabber := webgrab.New()
     grabber.Timeout = 30
     grabber.MaxRedirects = 10
     grabber.Grab("http://example.com", &page)
