@@ -77,12 +77,24 @@ type Page struct {
 }
 ```
 
-### Regex
+### Extract
 
-Regex can be used to extract data from the grabbed text. For example, to extract the title from a Wikipedia page:
+The `extract` tag can be used to extract a value from a string using a regular
+expression. For example, to extract the title from a Wikipedia page:
 
 ```go
 type Page struct {
-    Title string `grab:"title" regex:"(.+) - Wikipedia"`
+    Title string `grab:"title" extract:"(.+) - Wikipedia"`
+}
+```
+
+### Filter
+
+The `filter` tag can be used to filter the value of a field. For example, to
+get all links that contain end with `.html`:
+
+```go
+type Page struct {
+    Links []string `grab:"a[href],href" filter:".*\.html$"`
 }
 ```
