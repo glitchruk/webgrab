@@ -239,7 +239,7 @@ func (g Grab) scrapeStruct(doc *goquery.Document, nested interface{}) error {
 }
 
 // NewGrab returns a new Grab struct with default values.
-func NewGrab() *Grab {
+func NewGrabber() *Grab {
 	return &Grab{
 		Timeout:      10,
 		MaxRedirects: 10,
