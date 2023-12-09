@@ -92,7 +92,7 @@ type Page struct {
 ### Filter
 
 The `filter` tag can be used to filter the value of a field. For example, to
-get all links that contain end with `.html`:
+get all links that end with `.html`:
 
 ```go
 type Page struct {
