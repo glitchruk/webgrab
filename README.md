@@ -20,9 +20,9 @@ import (
 )
 
 type Page struct {
-    Title    string `webgrab:"title"`
-    Body     string `webgrab:"body"`
-    Keywords string `webgrab:"meta[name=keywords],content"`
+    Title    string `grab:"title"`
+    Body     string `grab:"body"`
+    Keywords string `grab:"meta[name=keywords],content"`
 }
 
 func main() {
@@ -44,7 +44,7 @@ func main() {
 The tag syntax is as follows:
 
 ```go
-`webgrab:"selector[,attribute]"`
+`grab:"selector[,attribute]"`
 ```
 
 The selector is a [GoQuery](http://godoc.org/github.com/PuerkitoBio/goquery) selector. The attribute is an
@@ -58,7 +58,7 @@ array. For example:
 
 ```go
 type Page struct {
-    Links []string `webgrab:"a[href],href"`
+    Links []string `grab:"a[href],href"`
 }
 ```
 
@@ -69,11 +69,11 @@ example:
 
 ```go
 type Page struct {
-    Title string `webgrab:"title"`
+    Title string `grab:"title"`
     Meta  struct {
-        Keywords string `webgrab:"meta[name=keywords],content"`
-        Author   string `webgrab:"meta[name=author],content"`
-    } `webgrab:"meta"`
+        Keywords string `grab:"meta[name=keywords],content"`
+        Author   string `grab:"meta[name=author],content"`
+    } `grab:"meta"`
 }
 ```
 
@@ -85,6 +85,6 @@ Regex can be used to extract data from the grabbed text. For example, to extract
 
 ```go
 type Page struct {
-    Title string `webgrab:"title" regex:"(.+) - Wikipedia"`
+    Title string `grab:"title" regex:"(.+) - Wikipedia"`
 }
 ```

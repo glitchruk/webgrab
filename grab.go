@@ -12,7 +12,7 @@ import (
 )
 
 // TagName is the name of the tag that contains the data to grab.
-const tagNameGrab = "webgrab"
+const tagNameGrab = "grab"
 
 // TagNameRegex is the name of the tag that contains the regex to use.
 const tagNameRegex = "regex"
