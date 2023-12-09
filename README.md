@@ -65,8 +65,8 @@ type Page struct {
 
 ### Nested Structs
 
-If the field is a struct, the selector will be applied to the struct. For
-example:
+It is possible to use nested structs to grab values from the page. For example,
+to grab the title and meta keywords from a page:
 
 ```go
 type Page struct {
