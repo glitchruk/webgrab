@@ -72,6 +72,9 @@ type Page struct {
     Title string `webgrab:"title"`
     Meta  struct {
         Keywords string `webgrab:"meta[name=keywords],content"`
-    }
+        Author   string `webgrab:"meta[name=author],content"`
+    } `webgrab:"meta"`
 }
 ```
+
+> Note the selector for the `Meta` field is `meta`; This does act as a selector, it is just used to indicate that the `Meta` field should be scraped.

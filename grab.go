@@ -1,6 +1,7 @@
 package webgrab
 
 import (
+	"fmt"
 	"net/http"
 	"reflect"
 	"strings"
@@ -25,6 +26,12 @@ type Grab struct {
 }
 
 type grabTag struct {
+	// Field is the name of the field in the struct.
+	Field string
+
+	// FieldType is the type of the field in the struct.
+	FieldType reflect.Type
+
 	// Selector is the CSS selector for the tag.
 	Selector string
 
@@ -51,9 +58,40 @@ func parseTag(tag string) grabTag {
 	return grabTag
 }
 
+// parseStruct parses the given struct and returns a slice of grab tags.
+func parseStruct(data interface{}) []grabTag {
+	// Create a new slice of grab tags.
+	tags := make([]grabTag, 0)
+
+	// For each field in the data struct, find the corresponding tag in the
+	// document and set the value of the field to the text of the tag.
+	for i := 0; i < reflect.TypeOf(data).Elem().NumField(); i++ {
+		// Get the tag.
+		tag := parseTag(reflect.TypeOf(data).Elem().Field(i).Tag.Get(tagName))
+		tag.Field = reflect.TypeOf(data).Elem().Field(i).Name
+		tag.FieldType = reflect.TypeOf(data).Elem().Field(i).Type
+
+		// If the tag is empty, skip it.
+		if tag.Selector == "" {
+			continue
+		}
+
+		// Append the tag to the slice.
+		tags = append(tags, tag)
+	}
+
+	// Return the tags.
+	return tags
+}
+
 // Grab grabs the data from the given URL and stores it in the given data
 // struct.
 func (g Grab) Grab(url string, data interface{}) error {
+	// If the data is not a pointer, return an error.
+	if reflect.TypeOf(data).Kind() != reflect.Ptr {
+		return fmt.Errorf("data must be a pointer")
+	}
+
 	// Create a new HTTP client with the given timeout.
 	client := &http.Client{
 		Timeout: time.Second * time.Duration(g.Timeout),
@@ -91,55 +129,108 @@ func (g Grab) Grab(url string, data interface{}) error {
 		return err
 	}
 
-	// For each field in the data struct, find the corresponding tag in the
-	// document and set the value of the field to the text of the tag.
-	for i := 0; i < reflect.ValueOf(data).NumField(); i++ {
-		// Get the field.
-		field := reflect.ValueOf(data).Field(i)
+	// Perform the scrape.
+	err = g.scrapeStruct(doc, data)
+	if err != nil {
+		return err
+	}
 
-		// Get the tag.
-		tag := parseTag(reflect.TypeOf(data).Field(i).Tag.Get(tagName))
+	// Return nil.
+	return nil
+}
 
-		// If the tag is empty, skip it.
-		if tag.Selector == "" {
+func (g Grab) scrape(doc *goquery.Document, tag grabTag) (string, error) {
+	// Find the tag in the document.
+	sel := doc.Find(tag.Selector)
+
+	// If the tag was not found, return an error.
+	if sel.Length() == 0 {
+		return "", fmt.Errorf("tag not found: %s", tag.Selector)
+	}
+
+	// If the attribute is empty, return the text of the tag.
+	if tag.Attribute == "" {
+		return sel.Text(), nil
+	}
+
+	// Return the attribute.
+	return sel.AttrOr(tag.Attribute, ""), nil
+}
+
+func (g Grab) scrapeSlice(doc *goquery.Document, tag grabTag) ([]string, error) {
+	// Create a new slice of strings.
+	strings := make([]string, 0)
+
+	// Find the tags in the document.
+	sel := doc.Find(tag.Selector)
+
+	// If the tag was not found, return an error.
+	if sel.Length() == 0 {
+		return nil, fmt.Errorf("tag not found: %s", tag.Selector)
+	}
+
+	// For each tag, append the text of the tag to the slice.
+	sel.Each(func(i int, s *goquery.Selection) {
+		// If the attribute is empty, append the text of the tag.
+		if tag.Attribute == "" {
+			strings = append(strings, s.Text())
+			return
+		}
+
+		// Append the attribute.
+		strings = append(strings, s.AttrOr(tag.Attribute, ""))
+	})
+
+	// Return the slice.
+	return strings, nil
+}
+
+func (g Grab) scrapeStruct(doc *goquery.Document, nested interface{}) error {
+	// Parse the struct.
+	tags := parseStruct(nested)
+
+	// For each tag, find the corresponding tag in the document and set the
+	// value of the field to the text of the tag.
+	for _, tag := range tags {
+		// If the field is a struct, scrape the struct.
+		if tag.FieldType.Kind() == reflect.Struct {
+			err := g.scrapeStruct(doc, reflect.ValueOf(nested).Elem().FieldByName(tag.Field).Addr().Interface())
+			if err != nil {
+				return err
+			}
 			continue
 		}
 
-		// Are we dealing with a slice?
-		if field.Kind() == reflect.Slice {
-			// Create a new slice.
-			slice := reflect.MakeSlice(field.Type(), 0, 0)
-
-			// Find all of the tags in the document.
-			doc.Find(tag.Selector).Each(func(i int, s *goquery.Selection) {
-				// Get the text of the tag.
-				text := s.Text()
-
-				// If the attribute is not empty, get the attribute.
-				if tag.Attribute != "" {
-					text = s.AttrOr(tag.Attribute, "")
-				}
-
-				// Append the text to the slice.
-				slice = reflect.Append(slice, reflect.ValueOf(text).Convert(field.Type().Elem()))
-			})
-
-			// Set the field to the slice.
-			field.Set(slice)
-		} else {
-			// Find the tag in the document.
-			s := doc.Find(tag.Selector)
-
-			// Get the text of the tag.
-			text := s.Text()
-
-			// If the attribute is not empty, get the attribute.
-			if tag.Attribute != "" {
-				text = s.AttrOr(tag.Attribute, "")
+		// If the field is a slice, scrape the slice.
+		if tag.FieldType.Kind() == reflect.Slice {
+			strings, err := g.scrapeSlice(doc, tag)
+			if err != nil {
+				return err
 			}
 
-			// Set the field, casting the text to the correct type.
-			field.Set(reflect.ValueOf(text).Convert(field.Type()))
+			// Create a new slice.
+			slice := reflect.MakeSlice(tag.FieldType, len(strings), len(strings))
+
+			// For each string, set the value of the slice to the string.
+			for i, str := range strings {
+				slice.Index(i).SetString(str)
+			}
+
+			// Set the value of the field to the slice.
+			reflect.ValueOf(nested).Elem().FieldByName(tag.Field).Set(slice)
+			continue
+		}
+
+		// If the field is a string, scrape the string.
+		if tag.FieldType.Kind() == reflect.String {
+			str, err := g.scrape(doc, tag)
+			if err != nil {
+				return err
+			}
+
+			// Set the value of the field to the string.
+			reflect.ValueOf(nested).Elem().FieldByName(tag.Field).SetString(str)
+			continue
 		}
 	}
 
