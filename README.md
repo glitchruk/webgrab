@@ -73,11 +73,9 @@ type Page struct {
     Meta  struct {
         Keywords string `grab:"meta[name=keywords],content"`
         Author   string `grab:"meta[name=author],content"`
-    } `grab:"meta"`
+    }
 }
 ```
-
-> Note the selector for the `Meta` field is `meta`; This does act as a selector, it is just used to indicate that the `Meta` field should be scraped.
 
 ### Regex
 

@@ -79,11 +79,6 @@ func parseStruct(data interface{}) []grabTag {
 		tag.FieldType = reflect.TypeOf(data).Elem().Field(i).Type
 		tag.Regex = reflect.TypeOf(data).Elem().Field(i).Tag.Get(tagNameRegex)
 
-		// If the tag is empty, skip it.
-		if tag.Selector == "" {
-			continue
-		}
-
 		// Append the tag to the slice.
 		tags = append(tags, tag)
 	}
