@@ -96,6 +96,6 @@ get all links that end with `.html`:
 
 ```go
 type Page struct {
-    Links []string `grab:"a[href],href" filter:".*\.html$"`
+    Links []string `grab:"a[href]" attr:"href" filter:".*\.html$"`
 }
 ```
