@@ -22,7 +22,7 @@ import (
 type Page struct {
     Title    string `grab:"title"`
     Body     string `grab:"body"`
-    Keywords string `grab:"meta[name=keywords],content"`
+    Keywords string `grab:"meta[name=keywords]" attr:"content"`
 }
 
 func main() {
@@ -41,11 +41,12 @@ func main() {
 
 ### Tag Syntax
 
-The tag syntax is as follows:
+The defined tags are:
 
-```go
-`grab:"selector[,attribute]"`
-```
+* `grab:"selector"` - The selector to use to grab the value.
+* `attr:"attribute"` - The attribute of the selected element to grab.
+* `extract:"regexp"` - A regular expression to extract a value from a string.
+* `filter:"regexp"` - A regular expression to filter the value of a field.
 
 The selector is a [GoQuery](http://godoc.org/github.com/PuerkitoBio/goquery) selector. The attribute is an
 optional attribute of the selected element to grab. If no attribute is
@@ -58,7 +59,7 @@ array. For example:
 
 ```go
 type Page struct {
-    Links []string `grab:"a[href],href"`
+    Links []string `grab:"a[href]" attr:"href"`
 }
 ```
 
@@ -71,8 +72,8 @@ example:
 type Page struct {
     Title string `grab:"title"`
     Meta  struct {
-        Keywords string `grab:"meta[name=keywords],content"`
-        Author   string `grab:"meta[name=author],content"`
+        Keywords string `grab:"meta[name=keywords]" attr:"content"`
+        Author   string `grab:"meta[name=author]" attr:"content"`
     }
 }
 ```

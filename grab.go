@@ -22,6 +22,10 @@ const tagNameExtract = "extract"
 // filtering the value.
 const tagNameFilter = "filter"
 
+// TagNameAttribute is the name of the tag that contains the attribute of the
+// tag to grab.
+const tagNameAttribute = "attr"
+
 // Grabber is the struct that contains the configuration for the grabber.
 type Grabber struct {
 	// Timeout is the timeout in seconds for the grabber.
@@ -54,25 +58,6 @@ type grabTag struct {
 	Filter string
 }
 
-func parseTag(tag string) grabTag {
-	// Create a new grab tag.
-	grabTag := grabTag{}
-
-	// Split the tag by the comma.
-	parts := strings.Split(tag, ",")
-
-	// Set the selector.
-	grabTag.Selector = parts[0]
-
-	// If there is an attribute, set the attribute.
-	if len(parts) > 1 {
-		grabTag.Attribute = parts[1]
-	}
-
-	// Return the grab tag.
-	return grabTag
-}
-
 // parseStruct parses the given struct and returns a slice of grab tags.
 func parseStruct(data interface{}) []grabTag {
 	// Create a new slice of grab tags.
@@ -82,11 +67,14 @@ func parseStruct(data interface{}) []grabTag {
 	// document and set the value of the field to the text of the tag.
 	for i := 0; i < reflect.TypeOf(data).Elem().NumField(); i++ {
 		// Get the tag.
-		tag := parseTag(reflect.TypeOf(data).Elem().Field(i).Tag.Get(tagNameGrab))
-		tag.Field = reflect.TypeOf(data).Elem().Field(i).Name
-		tag.FieldType = reflect.TypeOf(data).Elem().Field(i).Type
-		tag.Extract = reflect.TypeOf(data).Elem().Field(i).Tag.Get(tagNameExtract)
-		tag.Filter = reflect.TypeOf(data).Elem().Field(i).Tag.Get(tagNameFilter)
+		tag := grabTag{
+			Field:     reflect.TypeOf(data).Elem().Field(i).Name,
+			FieldType: reflect.TypeOf(data).Elem().Field(i).Type,
+			Selector:  reflect.TypeOf(data).Elem().Field(i).Tag.Get(tagNameGrab),
+			Extract:   reflect.TypeOf(data).Elem().Field(i).Tag.Get(tagNameExtract),
+			Filter:    reflect.TypeOf(data).Elem().Field(i).Tag.Get(tagNameFilter),
+			Attribute: reflect.TypeOf(data).Elem().Field(i).Tag.Get(tagNameAttribute),
+		}
 
 		// Append the tag to the slice.
 		tags = append(tags, tag)
