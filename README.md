@@ -1,4 +1,10 @@
-# WebGrab
+# 🌍🤏 WebGrab
+
+![GitHub](https://img.shields.io/github/license/glitchruk/webgrab)
+![GitHub release (with filter)](https://img.shields.io/github/v/release/glitchruk/webgrab)
+[![Go Report Card](https://goreportcard.com/badge/github.com/glitchruk/webgrab)](https://goreportcard.com/report/github.com/glitchruk/webgrab)
+[![Go Reference](https://pkg.go.dev/badge/github.com/glitchruk/webgrab.svg)](https://pkg.go.dev/github.com/glitchruk/webgrab)
+
 
 WebGrab is a simple Go library which allows for easy scraping of web pages. It is built on top of the [GoQuery](http://github.com/PuerkitoBio/goquery) library.
 
@@ -20,9 +26,9 @@ import (
 )
 
 type Page struct {
-    Title    string `webgrab:"title"`
-    Body     string `webgrab:"body"`
-    Keywords string `webgrab:"meta[name=keywords],content"`
+    Title    string `grab:"title"`
+    Body     string `grab:"body"`
+    Keywords string `grab:"meta[name=keywords]" attr:"content"`
 }
 
 func main() {
@@ -41,11 +47,12 @@ func main() {
 
 ### Tag Syntax
 
-The tag syntax is as follows:
+The defined tags are:
 
-```go
-`webgrab:"selector[,attribute]"`
-```
+* `grab:"selector"` - The selector to use to grab the value.
+* `attr:"attribute"` - The attribute of the selected element to grab.
+* `extract:"regexp"` - A regular expression to extract a value from a string.
+* `filter:"regexp"` - A regular expression to filter the value of a field.
 
 The selector is a [GoQuery](http://godoc.org/github.com/PuerkitoBio/goquery) selector. The attribute is an
 optional attribute of the selected element to grab. If no attribute is
@@ -53,38 +60,48 @@ specified, the text of the selected element will be grabbed.
 
 ### Arrays
 
-If the field is an array, the selector will be applied to each element of the
-array. For example:
+If the field is an array, all matching elements will be grabbed. For example,
+to grab all links from a page:
 
 ```go
 type Page struct {
-    Links []string `webgrab:"a[href],href"`
+    Links []string `grab:"a[href]" attr:"href"`
 }
 ```
 
 ### Nested Structs
 
-If the field is a struct, the selector will be applied to the struct. For
-example:
+It is possible to use nested structs to grab values from the page. For example,
+to grab the title and meta keywords from a page:
 
 ```go
 type Page struct {
-    Title string `webgrab:"title"`
+    Title string `grab:"title"`
     Meta  struct {
-        Keywords string `webgrab:"meta[name=keywords],content"`
-        Author   string `webgrab:"meta[name=author],content"`
-    } `webgrab:"meta"`
+        Keywords string `grab:"meta[name=keywords]" attr:"content"`
+        Author   string `grab:"meta[name=author]" attr:"content"`
+    }
 }
 ```
 
-> Note the selector for the `Meta` field is `meta`; This does act as a selector, it is just used to indicate that the `Meta` field should be scraped.
+### Extract
 
-### Regex
-
-Regex can be used to extract data from the grabbed text. For example, to extract the title from a Wikipedia page:
+The `extract` tag can be used to extract a value from a string using a regular
+expression. For example, to extract the title from a Wikipedia page:
 
 ```go
 type Page struct {
-    Title string `webgrab:"title" regex:"(.+) - Wikipedia"`
+    Title string `grab:"title" extract:"(.+) - Wikipedia"`
+}
+```
+
+### Filter
+
+The `filter` tag can be used to filter the value of a field. For example, to
+get all links that end with `.html`:
+
+```go
+type Page struct {
+    Links []string `grab:"a[href]" attr:"href" filter:".*\.html$"`
 }
 ```
