@@ -1,5 +1,11 @@
 # WebGrab
 
+![GitHub](https://img.shields.io/github/license/glitchruk/webgrab)
+![GitHub release (with filter)](https://img.shields.io/github/v/release/glitchruk/webgrab)
+[![Go Report Card](https://goreportcard.com/badge/github.com/glitchruk/webgrab)](https://goreportcard.com/report/github.com/glitchruk/webgrab)
+[![Go Reference](https://pkg.go.dev/badge/github.com/glitchruk/webgrab.svg)](https://pkg.go.dev/github.com/glitchruk/webgrab)
+
+
 WebGrab is a simple Go library which allows for easy scraping of web pages. It is built on top of the [GoQuery](http://github.com/PuerkitoBio/goquery) library.
 
 ## Installation
