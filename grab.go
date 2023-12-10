@@ -131,6 +131,11 @@ func (g Grabber) Grab(url string, data interface{}) error {
 	}
 	defer resp.Body.Close()
 
+	// If the status code is not 200, return an error.
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("status code is not 200: %d", resp.StatusCode)
+	}
+
 	// Create a new document from the response body.
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
