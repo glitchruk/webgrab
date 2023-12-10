@@ -1,4 +1,4 @@
-# WebGrab
+# 🌍🤏 WebGrab
 
 ![GitHub](https://img.shields.io/github/license/glitchruk/webgrab)
 ![GitHub release (with filter)](https://img.shields.io/github/v/release/glitchruk/webgrab)
